@@ -99,14 +99,15 @@ def ranked_keys(current):
 def build_ranking_table(current):
     order = ranked_keys(current)
     best_key = order[0]
-    header = f" {'Ida':<5} {'Volta':<5} {'Preco':>12} {'Duracao':>8}  Cia"
+    header = f" {'Ida':<5} {'Volta':<5} {'Preco':>12} {'Voo ida':>8} {'Voo volta':>9}  Cia"
     lines = [header, "-" * len(header)]
     for key in order:
         o = current[key]
         mark = "*" if key == best_key else " "
         lines.append(
             f"{mark}{format_date_br(o['departure_date']):<5} {format_date_br(o['return_date']):<5} "
-            f"{('R$ ' + format_brl(o['price'])):>12} {format_duration(o['duration_minutes']):>8}  {o['carrier']}"
+            f"{('R$ ' + format_brl(o['price'])):>12} {format_duration(o['out_duration_minutes']):>8} "
+            f"{format_duration(o['ret_duration_minutes']):>9}  {o['carrier']}"
         )
     return "<pre>" + "\n".join(lines) + "</pre>"
 
@@ -163,6 +164,8 @@ def main():
             "return_date": ret,
             "price": out_leg["price"] + ret_leg["price"],
             "duration_minutes": out_leg["duration_minutes"] + ret_leg["duration_minutes"],
+            "out_duration_minutes": out_leg["duration_minutes"],
+            "ret_duration_minutes": ret_leg["duration_minutes"],
             "carrier": f"{out_leg['carrier']} / {ret_leg['carrier']}",
             "last_checked": datetime.now(timezone.utc).isoformat(),
         }
