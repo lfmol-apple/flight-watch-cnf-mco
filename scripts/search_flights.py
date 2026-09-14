@@ -1,10 +1,11 @@
-"""Robo de busca de passagens: consulta a Amadeus API para todas as combinacoes
-de data configuradas, acha a melhor oferta de cada uma, compara com a ultima
-checagem salva e avisa no Telegram quando algum preco muda."""
+"""Robo de busca de passagens: consulta o Google Flights via SerpApi para
+as pernas de ida e volta configuradas, combina os precos localmente para
+achar a melhor combinacao de datas, compara com a ultima checagem salva e
+avisa no Telegram quando algum preco muda."""
 
+import itertools
 import json
 import os
-import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "config.json"
 HISTORY_PATH = ROOT / "data" / "price_history.json"
 
-AMADEUS_BASE = "https://test.api.amadeus.com"
+SERPAPI_URL = "https://serpapi.com/search"
 
 
 def load_config():
@@ -36,73 +37,44 @@ def save_history(history):
         json.dump(history, f, ensure_ascii=False, indent=2, sort_keys=True)
 
 
-def get_token():
-    client_id = os.environ["AMADEUS_CLIENT_ID"]
-    client_secret = os.environ["AMADEUS_CLIENT_SECRET"]
-    r = requests.post(
-        f"{AMADEUS_BASE}/v1/security/oauth2/token",
-        data={
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret,
-        },
-        timeout=30,
-    )
-    r.raise_for_status()
-    return r.json()["access_token"]
-
-
-def parse_duration_minutes(iso_duration):
-    m = re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?", iso_duration or "")
-    if not m:
-        return 0
-    hours = int(m.group(1) or 0)
-    minutes = int(m.group(2) or 0)
-    return hours * 60 + minutes
-
-
-def search_offers(token, cfg, departure_date, return_date):
+def search_one_way(api_key, origin, destination, date, currency, adults):
     r = requests.get(
-        f"{AMADEUS_BASE}/v2/shopping/flight-offers",
-        headers={"Authorization": f"Bearer {token}"},
+        SERPAPI_URL,
         params={
-            "originLocationCode": cfg["origin"],
-            "destinationLocationCode": cfg["destination"],
-            "departureDate": departure_date,
-            "returnDate": return_date,
-            "adults": cfg.get("adults", 1),
-            "travelClass": cfg.get("travel_class", "ECONOMY"),
-            "currencyCode": cfg.get("currency", "BRL"),
-            "max": 10,
+            "engine": "google_flights",
+            "departure_id": origin,
+            "arrival_id": destination,
+            "outbound_date": date,
+            "type": 2,  # one way
+            "currency": currency,
+            "adults": adults,
+            "hl": "pt-br",
+            "gl": "br",
+            "api_key": api_key,
         },
         timeout=30,
     )
     if r.status_code >= 400:
-        print(f"  aviso: falha na busca {departure_date}->{return_date}: {r.status_code} {r.text[:300]}", file=sys.stderr)
-        return []
-    return r.json().get("data", [])
-
-
-def best_offer(offers):
+        print(f"  aviso: falha na busca {origin}->{destination} {date}: {r.status_code} {r.text[:300]}", file=sys.stderr)
+        return None
+    data = r.json()
+    candidates = (data.get("best_flights") or []) + (data.get("other_flights") or [])
     best = None
-    for o in offers:
+    for item in candidates:
         try:
-            price = float(o["price"]["grandTotal"])
-            currency = o["price"]["currency"]
-            total_minutes = sum(parse_duration_minutes(it.get("duration")) for it in o["itineraries"])
-            carriers = o.get("validatingAirlineCodes") or []
-            carrier = carriers[0] if carriers else "?"
-        except (KeyError, ValueError):
+            price = float(item["price"])
+            duration = int(item.get("total_duration") or 0)
+        except (KeyError, ValueError, TypeError):
             continue
-        rank = (price, total_minutes)
+        flights = item.get("flights") or []
+        carrier = flights[0].get("airline") if flights else "?"
+        rank = (price, duration)
         if best is None or rank < best[0]:
-            best = (rank, {
-                "price": price,
-                "currency": currency,
-                "duration_minutes": total_minutes,
-                "carrier": carrier,
-            })
-    return best[1] if best else None
+            best = (rank, {"price": price, "duration_minutes": duration, "carrier": carrier})
+    if best is None:
+        print(f"  nenhuma oferta encontrada para {origin}->{destination} {date}", file=sys.stderr)
+        return None
+    return best[1]
 
 
 def format_duration(minutes):
@@ -137,22 +109,41 @@ def main():
     history = load_history()
     is_first_run = not history["combos"]
 
-    token = get_token()
+    api_key = os.environ["SERPAPI_KEY"]
+    currency = cfg.get("currency", "BRL")
+    adults = cfg.get("adults", 1)
+    origin = cfg["origin"]
+    destination = cfg["destination"]
+
+    outbound_legs = {}
+    for dep in cfg["departure_dates"]:
+        print(f"Buscando ida {origin}->{destination} {dep}...")
+        leg = search_one_way(api_key, origin, destination, dep, currency, adults)
+        if leg:
+            outbound_legs[dep] = leg
+
+    return_legs = {}
+    for ret in cfg["return_dates"]:
+        print(f"Buscando volta {destination}->{origin} {ret}...")
+        leg = search_one_way(api_key, destination, origin, ret, currency, adults)
+        if leg:
+            return_legs[ret] = leg
 
     current = {}
-    for dep in cfg["departure_dates"]:
-        for ret in cfg["return_dates"]:
-            key = f"{dep}_{ret}"
-            print(f"Buscando {key}...")
-            offers = search_offers(token, cfg, dep, ret)
-            offer = best_offer(offers)
-            if offer:
-                offer["last_checked"] = datetime.now(timezone.utc).isoformat()
-                offer["departure_date"] = dep
-                offer["return_date"] = ret
-                current[key] = offer
-            else:
-                print(f"  nenhuma oferta encontrada para {key}", file=sys.stderr)
+    for dep, ret in itertools.product(cfg["departure_dates"], cfg["return_dates"]):
+        out_leg = outbound_legs.get(dep)
+        ret_leg = return_legs.get(ret)
+        if not out_leg or not ret_leg:
+            continue
+        key = f"{dep}_{ret}"
+        current[key] = {
+            "departure_date": dep,
+            "return_date": ret,
+            "price": out_leg["price"] + ret_leg["price"],
+            "duration_minutes": out_leg["duration_minutes"] + ret_leg["duration_minutes"],
+            "carrier": f"{out_leg['carrier']} / {ret_leg['carrier']}",
+            "last_checked": datetime.now(timezone.utc).isoformat(),
+        }
 
     if not current:
         print("Nenhuma oferta encontrada em nenhuma combinacao. Encerrando sem notificar.", file=sys.stderr)
@@ -172,7 +163,7 @@ def main():
     overall_best = current[overall_best_key]
 
     if is_first_run:
-        lines = ["<b>Monitoramento de passagens iniciado</b>", "CNF -> MCO -> CNF", ""]
+        lines = ["<b>Monitoramento de passagens iniciado</b>", f"{origin} -> {destination} -> {origin}", ""]
         for key in sorted(current):
             o = current[key]
             lines.append(format_offer_line(o["departure_date"], o["return_date"], o))
@@ -180,7 +171,7 @@ def main():
         lines.append(f"<b>Melhor combinacao agora:</b> {format_offer_line(overall_best['departure_date'], overall_best['return_date'], overall_best)}")
         send_telegram("\n".join(lines))
     elif changes:
-        lines = ["<b>Mudanca de preco detectada</b> (CNF <-> MCO)", ""]
+        lines = [f"<b>Mudanca de preco detectada</b> ({origin} &lt;-&gt; {destination})", ""]
         for key, prev, offer, diff in changes:
             arrow = "queda" if diff < 0 else "alta"
             lines.append(
