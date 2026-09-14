@@ -82,11 +82,33 @@ def format_duration(minutes):
     return f"{h}h{m:02d}"
 
 
-def format_offer_line(dep, ret, offer):
-    return (
-        f"{dep} -> {ret} | R$ {offer['price']:.2f} | "
-        f"{format_duration(offer['duration_minutes'])} | {offer['carrier']}"
-    )
+def format_brl(value):
+    s = f"{value:,.2f}"
+    return s.replace(",", "§").replace(".", ",").replace("§", ".")
+
+
+def format_date_br(iso_date):
+    y, m, d = iso_date.split("-")
+    return f"{d}/{m}"
+
+
+def ranked_keys(current):
+    return sorted(current, key=lambda k: (current[k]["price"], current[k]["duration_minutes"]))
+
+
+def build_ranking_table(current):
+    order = ranked_keys(current)
+    best_key = order[0]
+    header = f" {'Ida':<5} {'Volta':<5} {'Preco':>12} {'Duracao':>8}  Cia"
+    lines = [header, "-" * len(header)]
+    for key in order:
+        o = current[key]
+        mark = "*" if key == best_key else " "
+        lines.append(
+            f"{mark}{format_date_br(o['departure_date']):<5} {format_date_br(o['return_date']):<5} "
+            f"{('R$ ' + format_brl(o['price'])):>12} {format_duration(o['duration_minutes']):>8}  {o['carrier']}"
+        )
+    return "<pre>" + "\n".join(lines) + "</pre>"
 
 
 def send_telegram(text):
@@ -159,27 +181,28 @@ def main():
         if abs(diff) >= min_change:
             changes.append((key, prev, offer, diff))
 
-    overall_best_key = min(current, key=lambda k: (current[k]["price"], current[k]["duration_minutes"]))
-    overall_best = current[overall_best_key]
+    table = build_ranking_table(current)
 
     if is_first_run:
-        lines = ["<b>Monitoramento de passagens iniciado</b>", f"{origin} -> {destination} -> {origin}", ""]
-        for key in sorted(current):
-            o = current[key]
-            lines.append(format_offer_line(o["departure_date"], o["return_date"], o))
-        lines.append("")
-        lines.append(f"<b>Melhor combinacao agora:</b> {format_offer_line(overall_best['departure_date'], overall_best['return_date'], overall_best)}")
+        lines = [
+            "<b>Monitoramento de passagens iniciado</b>",
+            f"{origin} -> {destination} -> {origin} (ordenado por preco, * = melhor)",
+            "",
+            table,
+        ]
         send_telegram("\n".join(lines))
     elif changes:
+        changes.sort(key=lambda c: (c[2]["departure_date"], c[2]["return_date"]))
         lines = [f"<b>Mudanca de preco detectada</b> ({origin} &lt;-&gt; {destination})", ""]
         for key, prev, offer, diff in changes:
             arrow = "queda" if diff < 0 else "alta"
             lines.append(
-                f"{offer['departure_date']} -> {offer['return_date']}: "
-                f"R$ {prev['price']:.2f} -> R$ {offer['price']:.2f} ({arrow} de R$ {abs(diff):.2f})"
+                f"{format_date_br(offer['departure_date'])} -> {format_date_br(offer['return_date'])}: "
+                f"R$ {format_brl(prev['price'])} -> R$ {format_brl(offer['price'])} ({arrow} de R$ {format_brl(abs(diff))})"
             )
         lines.append("")
-        lines.append(f"<b>Melhor combinacao agora:</b> {format_offer_line(overall_best['departure_date'], overall_best['return_date'], overall_best)}")
+        lines.append("Ranking atualizado (ordenado por preco, * = melhor):")
+        lines.append(table)
         send_telegram("\n".join(lines))
     else:
         print("Sem mudancas de preco relevantes, nada a notificar.")
