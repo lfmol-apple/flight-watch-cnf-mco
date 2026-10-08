@@ -3,40 +3,40 @@
     "2026-10-30_2026-11-02": {
       "carrier": "COPA / Gol",
       "departure_date": "2026-10-30",
-      "duration_minutes": 2120,
-      "last_checked": "2026-10-07T18:01:37.880856+00:00",
-      "out_duration_minutes": 810,
-      "price": 5718.0,
+      "duration_minutes": 2174,
+      "last_checked": "2026-10-08T18:03:49.385395+00:00",
+      "out_duration_minutes": 864,
+      "price": 5864.0,
       "ret_duration_minutes": 1310,
       "return_date": "2026-11-02"
     },
     "2026-10-30_2026-11-03": {
       "carrier": "COPA / LATAM",
       "departure_date": "2026-10-30",
-      "duration_minutes": 2015,
-      "last_checked": "2026-10-07T18:01:37.880877+00:00",
-      "out_duration_minutes": 810,
-      "price": 5070.0,
+      "duration_minutes": 2069,
+      "last_checked": "2026-10-08T18:03:49.385417+00:00",
+      "out_duration_minutes": 864,
+      "price": 5089.0,
       "ret_duration_minutes": 1205,
       "return_date": "2026-11-03"
     },
     "2026-10-30_2026-11-04": {
       "carrier": "COPA / American",
       "departure_date": "2026-10-30",
-      "duration_minutes": 2274,
-      "last_checked": "2026-10-07T18:01:37.880881+00:00",
-      "out_duration_minutes": 810,
-      "price": 5422.0,
-      "ret_duration_minutes": 1464,
+      "duration_minutes": 2063,
+      "last_checked": "2026-10-08T18:03:49.385421+00:00",
+      "out_duration_minutes": 864,
+      "price": 5442.0,
+      "ret_duration_minutes": 1199,
       "return_date": "2026-11-04"
     },
     "2026-10-31_2026-11-02": {
       "carrier": "LATAM / Gol",
       "departure_date": "2026-10-31",
       "duration_minutes": 2170,
-      "last_checked": "2026-10-07T18:01:37.880884+00:00",
+      "last_checked": "2026-10-08T18:03:49.385424+00:00",
       "out_duration_minutes": 860,
-      "price": 5432.0,
+      "price": 5577.0,
       "ret_duration_minutes": 1310,
       "return_date": "2026-11-02"
     },
@@ -44,22 +44,22 @@
       "carrier": "LATAM / LATAM",
       "departure_date": "2026-10-31",
       "duration_minutes": 2065,
-      "last_checked": "2026-10-07T18:01:37.880887+00:00",
+      "last_checked": "2026-10-08T18:03:49.385426+00:00",
       "out_duration_minutes": 860,
-      "price": 4784.0,
+      "price": 4802.0,
       "ret_duration_minutes": 1205,
       "return_date": "2026-11-03"
     },
     "2026-10-31_2026-11-04": {
       "carrier": "LATAM / American",
       "departure_date": "2026-10-31",
-      "duration_minutes": 2324,
-      "last_checked": "2026-10-07T18:01:37.880889+00:00",
+      "duration_minutes": 2059,
+      "last_checked": "2026-10-08T18:03:49.385429+00:00",
       "out_duration_minutes": 860,
-      "price": 5136.0,
-      "ret_duration_minutes": 1464,
+      "price": 5155.0,
+      "ret_duration_minutes": 1199,
       "return_date": "2026-11-04"
     }
   },
-  "last_run": "2026-10-07T18:01:38.499890+00:00"
+  "last_run": "2026-10-08T18:03:50.210421+00:00"
 }
