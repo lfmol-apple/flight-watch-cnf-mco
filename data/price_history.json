@@ -4,9 +4,9 @@
       "carrier": "COPA / COPA",
       "departure_date": "2026-10-30",
       "duration_minutes": 2800,
-      "last_checked": "2026-10-26T17:44:48.729100+00:00",
+      "last_checked": "2026-10-27T16:56:14.007107+00:00",
       "out_duration_minutes": 1035,
-      "price": 4496.0,
+      "price": 4647.0,
       "ret_duration_minutes": 1765,
       "return_date": "2026-11-02"
     },
@@ -14,9 +14,9 @@
       "carrier": "COPA / LATAM",
       "departure_date": "2026-10-30",
       "duration_minutes": 1900,
-      "last_checked": "2026-10-26T17:44:48.729129+00:00",
+      "last_checked": "2026-10-27T16:56:14.007136+00:00",
       "out_duration_minutes": 1035,
-      "price": 4441.0,
+      "price": 4589.0,
       "ret_duration_minutes": 865,
       "return_date": "2026-11-03"
     },
@@ -24,9 +24,9 @@
       "carrier": "COPA / COPA",
       "departure_date": "2026-10-30",
       "duration_minutes": 1955,
-      "last_checked": "2026-10-26T17:44:48.729136+00:00",
+      "last_checked": "2026-10-27T16:56:14.007139+00:00",
       "out_duration_minutes": 1035,
-      "price": 4490.0,
+      "price": 4642.0,
       "ret_duration_minutes": 920,
       "return_date": "2026-11-04"
     },
@@ -34,9 +34,9 @@
       "carrier": "COPA / COPA",
       "departure_date": "2026-10-31",
       "duration_minutes": 2657,
-      "last_checked": "2026-10-26T17:44:48.729140+00:00",
+      "last_checked": "2026-10-27T16:56:14.007140+00:00",
       "out_duration_minutes": 892,
-      "price": 4496.0,
+      "price": 4647.0,
       "ret_duration_minutes": 1765,
       "return_date": "2026-11-02"
     },
@@ -44,9 +44,9 @@
       "carrier": "COPA / LATAM",
       "departure_date": "2026-10-31",
       "duration_minutes": 1757,
-      "last_checked": "2026-10-26T17:44:48.729142+00:00",
+      "last_checked": "2026-10-27T16:56:14.007142+00:00",
       "out_duration_minutes": 892,
-      "price": 4441.0,
+      "price": 4589.0,
       "ret_duration_minutes": 865,
       "return_date": "2026-11-03"
     },
@@ -54,12 +54,12 @@
       "carrier": "COPA / COPA",
       "departure_date": "2026-10-31",
       "duration_minutes": 1812,
-      "last_checked": "2026-10-26T17:44:48.729145+00:00",
+      "last_checked": "2026-10-27T16:56:14.007144+00:00",
       "out_duration_minutes": 892,
-      "price": 4490.0,
+      "price": 4642.0,
       "ret_duration_minutes": 920,
       "return_date": "2026-11-04"
     }
   },
-  "last_run": "2026-10-26T17:44:49.312978+00:00"
+  "last_run": "2026-10-27T16:56:15.083074+00:00"
 }
